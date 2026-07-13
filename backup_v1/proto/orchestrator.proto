@@ -1,0 +1,48 @@
+syntax = "proto3";
+
+package orchestrator;
+
+option go_package = "./pb";
+
+service SkillOrchestrator {
+  rpc GenerateSkill(GenerateSkillRequest) returns (GenerateSkillResponse) {}
+  rpc EvaluateSkill(EvaluateSkillRequest) returns (EvaluateSkillResponse) {}
+}
+
+message GenerateSkillRequest {
+  string url = 1;
+  string content = 2; // Scraped markdown content
+  string custom_instructions = 3;
+  bool include_mcp = 4;
+}
+
+message GenerateSkillResponse {
+  string folder_name = 1;
+  string display_name = 2;
+  string description = 3;
+  map<string, string> files = 4;
+}
+
+message EvaluateSkillRequest {
+  string prompt = 1;
+  string skill_content = 2;
+  repeated string assertions = 3;
+}
+
+message EvaluateSkillResponse {
+  message Grade {
+    string assertion = 1;
+    bool passed = 2;
+    string evidence = 3;
+  }
+  
+  message EvaluationRun {
+    string output = 1;
+    int32 duration_ms = 2;
+    int32 total_tokens = 3;
+    repeated Grade grades = 4;
+  }
+
+  EvaluationRun baseline = 1;
+  EvaluationRun with_skill = 2;
+}

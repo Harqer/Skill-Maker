@@ -10,7 +10,8 @@ import { useRouter } from '@tanstack/react-router'
 
 
 // Import your publishable key
-const PUBLISHABLE_KEY = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY
+const PUBLISHABLE_KEY = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY || 'pk_test_bXV0dWFsLXdoaXBwZXQtMTIuY2xlcmsuYWNjb3VudHMuZGV2JA'
+
 
 if (typeof window !== 'undefined' && import.meta.env.VITE_POSTHOG_KEY) {
   posthog.init(import.meta.env.VITE_POSTHOG_KEY, {

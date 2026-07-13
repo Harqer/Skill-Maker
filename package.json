@@ -16,7 +16,10 @@
     "check": "biome check"
   },
   "dependencies": {
+    "@base-ui/react": "^1.6.0",
     "@clerk/clerk-react": "^5.61.8",
+    "@hookform/resolvers": "^5.4.0",
+    "@neondatabase/serverless": "^1.1.0",
     "@tailwindcss/vite": "^4.1.18",
     "@tanstack/react-devtools": "latest",
     "@tanstack/react-query": "^5.101.2",
@@ -26,14 +29,19 @@
     "@tanstack/react-router-with-query": "^1.130.17",
     "@tanstack/react-start": "latest",
     "@tanstack/router-plugin": "^1.132.0",
+    "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
+    "dotenv": "^17.4.2",
+    "drizzle-orm": "^0.45.2",
     "firebase": "^12.16.0",
     "lucide-react": "^0.545.0",
     "posthog-js": "^1.399.2",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
+    "react-hook-form": "^7.81.0",
     "tailwind-merge": "^3.6.0",
-    "tailwindcss": "^4.1.18"
+    "tailwindcss": "^4.1.18",
+    "zod": "^4.4.3"
   },
   "devDependencies": {
     "@biomejs/biome": "2.4.5",
@@ -48,7 +56,9 @@
     "@types/react-dom": "^19.2.0",
     "@vitejs/plugin-react": "^6.0.1",
     "babel-plugin-react-compiler": "^1.0.0",
+    "drizzle-kit": "^0.31.10",
     "jsdom": "^28.1.0",
+    "tsx": "^4.23.0",
     "typescript": "^6.0.2",
     "vite": "^8.0.0",
     "vitest": "^4.1.5"

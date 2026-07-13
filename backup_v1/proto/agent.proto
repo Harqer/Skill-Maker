@@ -1,0 +1,49 @@
+syntax = "proto3";
+package agent;
+
+option go_package = "skill-maker-backend/pb";
+
+service Orchestrator {
+  rpc GenerateSkill (GenerateSkillRequest) returns (GenerateSkillResponse);
+  rpc EvaluateSkill (EvaluateSkillRequest) returns (EvaluateSkillResponse);
+}
+
+message GenerateSkillRequest {
+  string url = 1;
+  string prompt = 2;
+  bool include_mcp = 3;
+}
+
+message GenerateSkillResponse {
+  string thread_id = 1;
+  string skill_content = 2;
+  string mcp_script = 3;
+  string mcp_config = 4;
+  string folder_name = 5;
+  string display_name = 6;
+  string description = 7;
+}
+
+message EvaluateSkillRequest {
+  string prompt = 1;
+  string skill_content = 2;
+  repeated string assertions = 3;
+}
+
+message Grade {
+  string assertion = 1;
+  bool passed = 2;
+  string evidence = 3;
+}
+
+message EvaluationResult {
+  string output = 1;
+  int64 duration_ms = 2;
+  int32 total_tokens = 3;
+  repeated Grade grades = 4;
+}
+
+message EvaluateSkillResponse {
+  EvaluationResult baseline = 1;
+  EvaluationResult with_skill = 2;
+}
