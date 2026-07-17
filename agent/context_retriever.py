@@ -1,8 +1,8 @@
-import os
 import asyncio
 from typing import List, Any
 from langchain_core.tools import tool
 from context_surfaces import UnifiedClient, ContextModel, ContextField
+from config import CTX_AGENT_KEY
 
 class WorkspaceContext(ContextModel):
     """Governed access to API specs, code guidelines, and past subagent skills."""
@@ -31,20 +31,19 @@ def get_context_tools() -> List[Any]:
         async def run_query():
             try:
                 # In production, ensure CTX_AGENT_KEY is set in Infisical.
-                agent_key = os.getenv("CTX_AGENT_KEY")
-                if not agent_key:
-                    return "Error: CTX_AGENT_KEY is not configured in the environment."
-                    
+                if not CTX_AGENT_KEY:
+                    return "Error: CTX_AGENT_KEY is not configured in Infisical."
+
                 async with UnifiedClient() as client:
                     result = await client.query_tool(
-                        agent_key=agent_key,
+                        agent_key=CTX_AGENT_KEY,
                         tool_name="search_workspacecontext_by_text",
                         arguments={"query": query, "limit": 5}
                     )
                     return str(result)
             except Exception as e:
                 return f"Failed to retrieve context from Redis Context Retriever: {e}"
-                
+
         return asyncio.run(run_query())
 
     return [query_business_context]

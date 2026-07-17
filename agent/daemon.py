@@ -1,11 +1,11 @@
-import os
 import sys
 from redis import Redis
 from rq import Worker, Queue, Connection
 
+import config  # noqa — runs Infisical SDK bootstrap and sets env vars
+from config import REDIS_URI
 
-redis_url = os.getenv("REDIS_URL", "redis://localhost:6379")
-conn = Redis.from_url(redis_url)
+conn = Redis.from_url(REDIS_URI)
 
 if __name__ == '__main__':
     print("Starting RQ Worker for Skill-Maker...")

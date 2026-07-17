@@ -10,7 +10,9 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as SubmitRouteImport } from './routes/submit'
+import { Route as LibraryRouteImport } from './routes/library'
 import { Route as ExploreRouteImport } from './routes/explore'
+import { Route as BenchmarksRouteImport } from './routes/benchmarks'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as SkillsSkillIdRouteImport } from './routes/skills.$skillId'
 
@@ -19,9 +21,19 @@ const SubmitRoute = SubmitRouteImport.update({
   path: '/submit',
   getParentRoute: () => rootRouteImport,
 } as any)
+const LibraryRoute = LibraryRouteImport.update({
+  id: '/library',
+  path: '/library',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ExploreRoute = ExploreRouteImport.update({
   id: '/explore',
   path: '/explore',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const BenchmarksRoute = BenchmarksRouteImport.update({
+  id: '/benchmarks',
+  path: '/benchmarks',
   getParentRoute: () => rootRouteImport,
 } as any)
 const IndexRoute = IndexRouteImport.update({
@@ -37,34 +49,61 @@ const SkillsSkillIdRoute = SkillsSkillIdRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/benchmarks': typeof BenchmarksRoute
   '/explore': typeof ExploreRoute
+  '/library': typeof LibraryRoute
   '/submit': typeof SubmitRoute
   '/skills/$skillId': typeof SkillsSkillIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/benchmarks': typeof BenchmarksRoute
   '/explore': typeof ExploreRoute
+  '/library': typeof LibraryRoute
   '/submit': typeof SubmitRoute
   '/skills/$skillId': typeof SkillsSkillIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/benchmarks': typeof BenchmarksRoute
   '/explore': typeof ExploreRoute
+  '/library': typeof LibraryRoute
   '/submit': typeof SubmitRoute
   '/skills/$skillId': typeof SkillsSkillIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/explore' | '/submit' | '/skills/$skillId'
+  fullPaths:
+    | '/'
+    | '/benchmarks'
+    | '/explore'
+    | '/library'
+    | '/submit'
+    | '/skills/$skillId'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/explore' | '/submit' | '/skills/$skillId'
-  id: '__root__' | '/' | '/explore' | '/submit' | '/skills/$skillId'
+  to:
+    | '/'
+    | '/benchmarks'
+    | '/explore'
+    | '/library'
+    | '/submit'
+    | '/skills/$skillId'
+  id:
+    | '__root__'
+    | '/'
+    | '/benchmarks'
+    | '/explore'
+    | '/library'
+    | '/submit'
+    | '/skills/$skillId'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  BenchmarksRoute: typeof BenchmarksRoute
   ExploreRoute: typeof ExploreRoute
+  LibraryRoute: typeof LibraryRoute
   SubmitRoute: typeof SubmitRoute
   SkillsSkillIdRoute: typeof SkillsSkillIdRoute
 }
@@ -78,11 +117,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SubmitRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/library': {
+      id: '/library'
+      path: '/library'
+      fullPath: '/library'
+      preLoaderRoute: typeof LibraryRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/explore': {
       id: '/explore'
       path: '/explore'
       fullPath: '/explore'
       preLoaderRoute: typeof ExploreRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/benchmarks': {
+      id: '/benchmarks'
+      path: '/benchmarks'
+      fullPath: '/benchmarks'
+      preLoaderRoute: typeof BenchmarksRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/': {
@@ -104,7 +157,9 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  BenchmarksRoute: BenchmarksRoute,
   ExploreRoute: ExploreRoute,
+  LibraryRoute: LibraryRoute,
   SubmitRoute: SubmitRoute,
   SkillsSkillIdRoute: SkillsSkillIdRoute,
 }

@@ -1,10 +1,8 @@
 import { HeadContent, Scripts, createRootRoute } from '@tanstack/react-router'
-import { TanStackRouterDevtoolsPanel } from '@tanstack/react-router-devtools'
-import { TanStackDevtools } from '@tanstack/react-devtools'
-import { ClerkProvider } from '@clerk/clerk-react'
+import { ClerkProvider } from '@clerk/tanstack-react-start'
 import posthog from 'posthog-js'
 import { useEffect } from 'react'
-import { Header } from '@/components/layout/Header'
+import { Sidebar } from '@/components/layout/Sidebar'
 import { QueryClientProvider } from '@tanstack/react-query'
 import { useRouter } from '@tanstack/react-router'
 
@@ -34,10 +32,23 @@ export const Route = createRootRoute({
         content: 'width=device-width, initial-scale=1',
       },
       {
-        title: 'TanStack Start Starter',
+        title: 'Skill Maker',
       },
     ],
     links: [
+      {
+        rel: 'preconnect',
+        href: 'https://fonts.googleapis.com',
+      },
+      {
+        rel: 'preconnect',
+        href: 'https://fonts.gstatic.com',
+        crossOrigin: 'anonymous',
+      },
+      {
+        rel: 'stylesheet',
+        href: 'https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Merriweather:ital,wght@0,300;0,400;0,700;1,400&display=swap',
+      },
       {
         rel: 'stylesheet',
         href: appCss,
@@ -59,25 +70,25 @@ function RootDocument({ children }: { children: React.ReactNode }) {
       <body>
         <QueryClientProvider client={queryClient}>
           <ClerkProvider publishableKey={PUBLISHABLE_KEY} afterSignOutUrl="/">
-            <div className="flex min-h-screen flex-col bg-background font-sans antialiased">
-              <Header />
-              <main className="flex-1">
-                {children}
-              </main>
+            <div className="flex h-screen w-full bg-background font-sans antialiased text-foreground overflow-hidden">
+              <Sidebar />
+              <div className="flex flex-col flex-1 overflow-y-auto">
+                <header className="p-8 pb-0">
+                  <div className="flex items-start gap-3">
+                    <img src="/peacock_logo.jpg" alt="Logo" className="w-10 h-10 rounded-md shadow-sm object-cover" />
+                    <div className="flex flex-col">
+                      <span className="font-bold text-lg leading-tight tracking-tight text-foreground">Skill Maker</span>
+                      <span className="text-sm italic text-muted-foreground font-serif">A workshop for AI skills</span>
+                    </div>
+                  </div>
+                </header>
+                <main className="flex-1">
+                  {children}
+                </main>
+              </div>
             </div>
           </ClerkProvider>
         </QueryClientProvider>
-        <TanStackDevtools
-          config={{
-            position: 'bottom-right',
-          }}
-          plugins={[
-            {
-              name: 'Tanstack Router',
-              render: <TanStackRouterDevtoolsPanel />,
-            },
-          ]}
-        />
         <Scripts />
       </body>
     </html>

@@ -1,19 +1,51 @@
+# Core LangChain / LangGraph stack
 langchain
 langgraph
 langsmith
+openevals                    # prebuilt LLM-as-judge evaluators for LangSmith
 langchain-google-genai
+langchain-text-splitters
+langchain-community
+langgraph-checkpoint-redis
+
+# Redis
 redis
-grpcio
-grpcio-tools
+redisvl
+
+# FastAPI + server
 fastapi
+uvicorn[standard]
 sqlmodel
 pydantic
+
+# Background jobs
 rq
-PyJWT
+
+# Auth
 clerk-backend-api
+
+# Webhook verification
+svix==1.22.0
+
+# Scraping
 firecrawl-py
 requests
+
+# Resilience
 tenacity
-svix==1.22.0
-langchain-text-splitters
-langgraph-checkpoint-redis
+
+# Database driver (Neon PostgreSQL)
+psycopg2-binary
+
+# Databricks SDK (lakehouse, Delta Lake pipelines, long-term storage)
+databricks-sdk
+
+
+# SkillOpt (offline skill optimizer)
+skillopt[webui]
+
+# Redis Agent Memory (managed service — memory.redis.io)
+redis-agent-memory
+
+# Infisical secrets (used by infisical CLI; Python SDK for programmatic access)
+infisicalsdk

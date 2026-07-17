@@ -1,35 +1,69 @@
+@import url('https://fonts.googleapis.com/css2?family=Merriweather:ital,wght@0,300;0,400;0,700;1,400&family=Inter:wght@400..700&display=swap');
 @import "tailwindcss";
 
 @theme {
-  --color-background: hsl(240 10% 3.9%);
-  --color-foreground: hsl(0 0% 98%);
+  --font-serif: 'Merriweather', ui-serif, Georgia, serif;
+  --font-sans: 'Inter', system-ui, sans-serif;
+
+  --color-background: hsl(40 33% 94%); /* Warm cream */
+  --color-foreground: hsl(20 11% 15%); /* Dark brown */
   
-  --color-card: hsl(240 10% 3.9%);
-  --color-card-foreground: hsl(0 0% 98%);
+  --color-card: hsl(40 25% 96%);
+  --color-card-foreground: hsl(20 11% 15%);
   
-  --color-popover: hsl(240 10% 3.9%);
-  --color-popover-foreground: hsl(0 0% 98%);
+  --color-popover: hsl(40 25% 96%);
+  --color-popover-foreground: hsl(20 11% 15%);
   
-  --color-primary: hsl(252 87% 67%); /* A rich indigo/purple */
-  --color-primary-foreground: hsl(0 0% 98%);
+  --color-primary: hsl(3 44% 38%); /* Reddish brown */
+  --color-primary-foreground: hsl(40 33% 94%);
   
-  --color-secondary: hsl(240 3.7% 15.9%);
-  --color-secondary-foreground: hsl(0 0% 98%);
+  --color-secondary: hsl(30 20% 88%);
+  --color-secondary-foreground: hsl(20 11% 15%);
   
-  --color-muted: hsl(240 3.7% 15.9%);
-  --color-muted-foreground: hsl(240 5% 64.9%);
+  --color-muted: hsl(30 20% 88%);
+  --color-muted-foreground: hsl(20 10% 40%);
   
-  --color-accent: hsl(240 3.7% 15.9%);
-  --color-accent-foreground: hsl(0 0% 98%);
+  --color-accent: hsl(30 20% 88%);
+  --color-accent-foreground: hsl(20 11% 15%);
+  
+  --color-destructive: hsl(0 84.2% 60.2%);
+  --color-destructive-foreground: hsl(0 0% 98%);
+  
+  --color-border: hsl(30 15% 82%);
+  --color-input: hsl(30 15% 82%);
+  --color-ring: hsl(3 44% 38%);
+
+  --radius: 0.75rem;
+}
+
+.dark {
+  --color-background: hsl(20 11% 10%); /* Very dark brown/charcoal */
+  --color-foreground: hsl(40 33% 94%); /* Warm cream text */
+  
+  --color-card: hsl(20 11% 15%);
+  --color-card-foreground: hsl(40 33% 94%);
+  
+  --color-popover: hsl(20 11% 15%);
+  --color-popover-foreground: hsl(40 33% 94%);
+  
+  --color-primary: hsl(3 44% 50%); /* Lighter reddish brown for contrast */
+  --color-primary-foreground: hsl(40 33% 94%);
+  
+  --color-secondary: hsl(20 10% 25%);
+  --color-secondary-foreground: hsl(40 33% 94%);
+  
+  --color-muted: hsl(20 10% 20%);
+  --color-muted-foreground: hsl(30 15% 70%);
+  
+  --color-accent: hsl(20 10% 25%);
+  --color-accent-foreground: hsl(40 33% 94%);
   
   --color-destructive: hsl(0 62.8% 30.6%);
   --color-destructive-foreground: hsl(0 0% 98%);
   
-  --color-border: hsl(240 3.7% 15.9%);
-  --color-input: hsl(240 3.7% 15.9%);
-  --color-ring: hsl(252 87% 67%);
-
-  --radius: 0.75rem;
+  --color-border: hsl(20 10% 25%);
+  --color-input: hsl(20 10% 25%);
+  --color-ring: hsl(3 44% 50%);
 }
 
 * {

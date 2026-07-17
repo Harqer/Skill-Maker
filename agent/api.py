@@ -1,6 +1,6 @@
 import os
 import uuid
-from fastapi import FastAPI, Depends, HTTPException, Header
+from fastapi import FastAPI, Depends, HTTPException, Header, Request
 from sqlmodel import Session
 from pydantic import BaseModel
 from typing import Optional
@@ -9,18 +9,16 @@ from redis import Redis
 from db import init_db, get_session
 from db_models import SkillRequest, User
 from clerk_backend_api import Clerk
-import jwt
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi import Request
 from svix.webhooks import Webhook, WebhookVerificationError
 from evaluate_skill import evaluate_skill
+import config  # noqa — sets env vars at import time
+from config import CLERK_SECRET_KEY, CLERK_WEBHOOK_SECRET, REDIS_URI, DATABASE_URL
 
 
 app = FastAPI()
 
-# Define allowed origins based on environment
-allowed_origins = os.getenv("FRONTEND_URL", "http://localhost:3000").split(",")
-
+allowed_origins = os.environ.get("FRONTEND_URL", "http://localhost:3000").split(",")
 app.add_middleware(
     CORSMiddleware,
     allow_origins=allowed_origins,
@@ -29,12 +27,9 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-CLERK_SECRET_KEY = os.getenv("CLERK_SECRET_KEY")
 clerk = Clerk(bearer_auth=CLERK_SECRET_KEY)
 
-# Initialize Redis and RQ
-redis_url = os.getenv("REDIS_URI", os.getenv("REDIS_URL", "redis://localhost:6379"))
-redis_conn = Redis.from_url(redis_url)
+redis_conn = Redis.from_url(REDIS_URI)
 q = Queue(connection=redis_conn)
 
 @app.on_event("startup")
@@ -46,23 +41,36 @@ class GenerateSkillPayload(BaseModel):
     prompt: str
     include_mcp: bool = False
 
-def get_current_user(authorization: str = Header(None)):
+def get_current_user(authorization: str = Header(None)) -> str:
+    """
+    Verify the Clerk JWT using the Clerk Backend SDK.
+    The SDK fetches the public JWKS from Clerk and validates the signature,
+    expiry, and issuer — no unverified decoding.
+    """
     if not authorization or not authorization.startswith("Bearer "):
         raise HTTPException(status_code=401, detail="Unauthorized")
     token = authorization.split(" ")[1]
     try:
-        unverified_claims = jwt.decode(token, options={"verify_signature": False})
-        user_id = unverified_claims.get("sub")
+        # request_state holds the verified claims or an error reason
+        request_state = clerk.authenticate_request(
+            Request(scope={"type": "http", "headers": [(b"authorization", authorization.encode())]}),
+            authenticate_request_options=None,
+        )
+        if not request_state.is_signed_in:
+            raise HTTPException(status_code=401, detail=f"Clerk auth failed: {request_state.reason}")
+        user_id = request_state.payload.get("sub")
         if not user_id:
-            raise HTTPException(status_code=401, detail="Invalid token")
+            raise HTTPException(status_code=401, detail="Token missing sub claim")
         return user_id
+    except HTTPException:
+        raise
     except Exception as e:
-        raise HTTPException(status_code=401, detail=str(e))
+        raise HTTPException(status_code=401, detail=f"Authentication error: {e}")
 
 @app.post("/api/generate_skill")
 def generate_skill(
     payload: GenerateSkillPayload,
-    user_id: str = "anonymous",
+    user_id: str = Depends(get_current_user),
     session: Session = Depends(get_session)
 ):
     thread_id = str(uuid.uuid4())
@@ -87,7 +95,7 @@ def generate_skill(
 @app.get("/api/skill_request/{db_id}")
 def get_skill_request(
     db_id: int,
-    user_id: str = "anonymous",
+    user_id: str = Depends(get_current_user),
     session: Session = Depends(get_session)
 ):
     req = session.get(SkillRequest, db_id)
@@ -119,7 +127,7 @@ class EvaluateSkillPayload(BaseModel):
 @app.post("/api/evaluate_skill")
 def evaluate_skill_endpoint(
     payload: EvaluateSkillPayload,
-    user_id: str = "anonymous"
+    user_id: str = Depends(get_current_user)
 ):
     try:
         results = evaluate_skill(
@@ -133,9 +141,8 @@ def evaluate_skill_endpoint(
 
 @app.post("/api/webhooks/clerk")
 async def clerk_webhook(request: Request, session: Session = Depends(get_session)):
-    CLERK_WEBHOOK_SECRET = os.getenv("CLERK_WEBHOOK_SECRET")
     if not CLERK_WEBHOOK_SECRET:
-        raise HTTPException(status_code=500, detail="CLERK_WEBHOOK_SECRET is not set")
+        raise HTTPException(status_code=500, detail="CLERK_WEBHOOK_SECRET is not configured in Infisical")
     
     headers = request.headers
     payload = await request.body()
@@ -178,6 +185,14 @@ async def clerk_webhook(request: Request, session: Session = Depends(get_session
             user.last_name = last_name
             
         session.commit()
+ 
+        # ── Sync to Neon Postgres (users table used by the frontend/skills FK) ──
+        _neon_upsert_user(
+            user_id=user_id,
+            email=primary_email,
+            first_name=first_name,
+            last_name=last_name,
+        )
         
     elif event_type == "user.deleted":
         user_id = data.get("id")
@@ -185,5 +200,57 @@ async def clerk_webhook(request: Request, session: Session = Depends(get_session
         if user:
             session.delete(user)
             session.commit()
+        _neon_delete_user(user_id)
             
     return {"success": True}
+
+
+# ── Neon helpers ──────────────────────────────────────────────────────────────
+
+def _get_neon_conn():
+    """Return a psycopg2 connection to Neon, or None if the driver isn't installed."""
+    try:
+        import psycopg2
+        return psycopg2.connect(DATABASE_URL)
+    except Exception:
+        return None
+
+
+def _neon_upsert_user(user_id: str, email: str, first_name: Optional[str], last_name: Optional[str]):
+    """Upsert the user row in Neon so the skills.author_id FK is satisfiable."""
+    conn = _get_neon_conn()
+    if conn is None:
+        return
+    try:
+        with conn:
+            with conn.cursor() as cur:
+                cur.execute(
+                    """
+                    INSERT INTO users (id, email, first_name, last_name)
+                    VALUES (%s, %s, %s, %s)
+                    ON CONFLICT (id) DO UPDATE
+                      SET email      = EXCLUDED.email,
+                          first_name = EXCLUDED.first_name,
+                          last_name  = EXCLUDED.last_name
+                    """,
+                    (user_id, email, first_name, last_name),
+                )
+    except Exception as exc:
+        print(f"[clerk_webhook] Neon upsert failed: {exc}")
+    finally:
+        conn.close()
+
+
+def _neon_delete_user(user_id: str):
+    """Remove the user row from Neon when a Clerk user.deleted event fires."""
+    conn = _get_neon_conn()
+    if conn is None:
+        return
+    try:
+        with conn:
+            with conn.cursor() as cur:
+                cur.execute("DELETE FROM users WHERE id = %s", (user_id,))
+    except Exception as exc:
+        print(f"[clerk_webhook] Neon delete failed: {exc}")
+    finally:
+        conn.close()

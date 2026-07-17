@@ -2,9 +2,9 @@ import os
 import sys
 from sqlmodel import Session
 
-
-# We must ensure the `agent` path is resolvable
+# Ensure the agent directory is on the path and secrets are loaded from Infisical env
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
+import config  # noqa — sets LANGCHAIN_TRACING_V2, GOOGLE_API_KEY, etc.
 
 from db import engine
 from db_models import SkillRequest
@@ -26,8 +26,9 @@ def process_skill_request(db_id: int, thread_id: str, user_id: str, url: str, pr
             session.add(req)
             session.commit()
 
-        # Run the agent from orchestrator.py
-        result = run_agent(url, prompt, include_mcp=include_mcp, thread_id=thread_id, user_id=user_id)
+        # Run the LangGraph orchestrator, passing db_id so ingest_skill can
+        # tag the Redis vector chunks with the correct skill identifier.
+        result = run_agent(url, prompt, include_mcp=include_mcp, thread_id=thread_id, user_id=user_id, db_id=db_id)
         
         # result is a dictionary returned by run_agent containing:
         # "skill_content", "mcp_script", "mcp_config", "trace_url"
@@ -44,6 +45,18 @@ def process_skill_request(db_id: int, thread_id: str, user_id: str, url: str, pr
                 session.add(req)
                 session.commit()
                 print(f"Successfully processed request {db_id}")
+                
+                # Register skill in SkillOpt for evaluation and refinement.
+                # Pass the scraped markdown so SkillOpt can build real training
+                # items from the documentation instead of dummy answers.
+                from skillopt_integration import register_skill_for_skillopt
+                register_skill_for_skillopt(
+                    db_id=db_id,
+                    skill_content=req.skill_content,
+                    prompt=prompt,
+                    target_url=url,
+                    scraped_markdown=result.get("scraped_text", ""),
+                )
 
     except Exception as e:
         import traceback
