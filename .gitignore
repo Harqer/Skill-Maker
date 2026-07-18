@@ -12,6 +12,14 @@ dist-ssr
 __unconfig*
 todos.json
 
+# Python virtual environments
+venv/
+venv_new/
+
+# Python compiled files
+__pycache__/
+*.pyc
+
 # Ignore all dotfiles
 .*
 # Keep .gitignore
