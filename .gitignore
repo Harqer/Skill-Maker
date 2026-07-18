@@ -17,6 +17,9 @@ todos.json
 *.sqlite
 *.sqlite3
 
+# PDF files
+*.pdf
+
 # Python virtual environments
 venv/
 venv_new/
