@@ -12,6 +12,11 @@ dist-ssr
 __unconfig*
 todos.json
 
+# Databases
+*.db
+*.sqlite
+*.sqlite3
+
 # Python virtual environments
 venv/
 venv_new/
