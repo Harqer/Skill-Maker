@@ -66,18 +66,23 @@ Based on the user interview, fill in these components:
 - **the rest of the skill :)**
 ### Skill Writing Guide
  
-#### Anatomy of a Skill
+#### Anatomy of a Skill (Structured Agent Framework)
  
+When generating a skill (which is essentially an agent), use a modular file structure to reduce token usage and keep the logic organized. Output a JSON object containing the files as keys and their content as values.
+ 
+```json
+{
+  "agent.ts": "export const agent = {\n  name: 'AgentName',\n  model: 'google/gemini-2.0-flash',\n  // ...\n};",
+  "instructions.md": "# Instructions\\n...",
+  "tools/my_tool.ts": "...",
+  "package.json": "{...}"
+}
 ```
-skill-name/
-├── SKILL.md (required)
-│   ├── YAML frontmatter (name, description required)
-│   └── Markdown instructions
-└── Bundled Resources (optional)
-    ├── scripts/    - Executable code for deterministic/repetitive tasks
-    ├── references/ - Docs loaded into context as needed
-    └── assets/     - Files used in output (templates, icons, fonts)
-```
+ 
+- **agent.ts**: Defines the agent, its name, description, and tools (do not import the `eve` library directly, just export the agent configuration object).
+- **instructions.md**: The core prompt and behavior guidelines for the agent.
+- **tools/**: Any custom TypeScript tools the agent needs.
+- **package.json**: Dependencies (include `zod`, etc.).
  
 #### Progressive Disclosure
  

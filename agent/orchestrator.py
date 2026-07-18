@@ -62,14 +62,14 @@ skill_store = SkillVectorStore()
 # ── State ────────────────────────────────────────────────────────────────────
 
 class AgentState(TypedDict):
-    messages:    Annotated[list[AnyMessage], operator.add]
+    task_prompt: str
     skill_content: str
     target_url:  str
     include_mcp: bool
     folder_name: str
     mcp_script:  Optional[str]
     mcp_config:  Optional[str]
-    scraped_text: str
+    pruned_context: str
     analysis:    str
     db_id:       Optional[int]   # set externally by worker so ingest can tag by skill id
 
@@ -78,9 +78,33 @@ class AgentState(TypedDict):
 
 @retry(stop=stop_after_attempt(3), wait=wait_exponential(multiplier=1, min=2, max=10))
 def scrape_and_analyze(state: AgentState):
-    """Fetch and summarise the documentation at target_url."""
+    """Fetch and summarise the documentation at target_url using 0-token interception and context pruning."""
     url = state["target_url"]
+    
+    # ZERO-TOKEN INTERCEPTION
+    cached_skills = skill_store.search(url, k=1)
+    if cached_skills:
+        print(f"[orchestrator] 0-token semantic hit for {url}. Bypassing scraper and LLM.")
+        return {
+            "pruned_context": f"Cached Skill Context:\n{cached_skills[0]['content']}", 
+            "analysis": "Cached analysis loaded from Redis."
+        }
+
     scraped_text = scrape_docs(url)
+    
+    # CONTEXT PRUNING VIA REDIS AGENT MEMORY
+    thread_id = "doc_scrape_" + url.replace("https://", "").replace("/", "_")
+    agent_memory.add_long_term_memory(session_id=thread_id, text=f"Documentation for {url}:\n{scraped_text}")
+    
+    # Retrieve pruned, strictly relevant context
+    pruned_results = agent_memory.search_long_term_memory(query=f"{state['task_prompt']} API endpoints requirements", limit=3)
+    if pruned_results:
+        try:
+            pruned_context = "\n\n".join([res.get("text", "") if isinstance(res, dict) else res.text for res in pruned_results])
+        except Exception:
+            pruned_context = scraped_text[:10000]
+    else:
+        pruned_context = scraped_text[:10000]
 
     context_tools = get_context_tools()
     llm_with_tools = llm.bind_tools(context_tools)
@@ -89,19 +113,18 @@ def scrape_and_analyze(state: AgentState):
         content=(
             "You are an expert documentation analyzer. "
             "Summarize the overall capabilities of the skill based on the provided API documentation. "
-            "Extract any specific API endpoints, required parameters, and authentication methods. "
-            "If the extracted text contains pre-written Agent Skills (e.g. SKILL.md format), "
-            "output them clearly so they can be preserved verbatim."
+            "Extract any specific API endpoints, required parameters, and authentication methods."
         )
     )
-    analysis_prompt = HumanMessage(content=f"Documentation from {url}:\n\n{scraped_text}")
-    response = llm_with_tools.invoke([sys_msg] + state["messages"] + [analysis_prompt])
-    return {"messages": [response], "scraped_text": scraped_text, "analysis": response.content}
+    analysis_prompt = HumanMessage(content=f"Pruned Documentation for {url}:\n\n{pruned_context}\n\nTask: {state['task_prompt']}")
+    response = llm_with_tools.invoke([sys_msg, analysis_prompt])
+    return {"pruned_context": pruned_context, "analysis": response.content}
 
 
 @retry(stop=stop_after_attempt(3), wait=wait_exponential(multiplier=1, min=2, max=10))
 def generate_skill_card(state: AgentState):
-    """Generate the SKILL.md content following the skill_creator_prompt standards."""
+    """Generate the Eve framework skill content as strict JSON."""
+    
     prompt_path = os.path.join(os.path.dirname(__file__), "skill_creator_prompt.txt")
     with open(prompt_path) as f:
         skill_creator_prompt = f.read()
@@ -109,21 +132,20 @@ def generate_skill_card(state: AgentState):
     sys_msg = SystemMessage(
         content=(
             "You are an expert skill creator agent. Based on the scraped URL analysis, "
-            "generate the final SKILL.md output.\n"
-            "CRITICAL: If the analysis contains pre-written Agent Skills provided by the "
-            "documentation, you MUST use those as the basis for your output. Preserve their "
-            "core instructions and only adapt them to fit the required SKILL.md YAML frontmatter format.\n"
-            "OUTPUT FORMAT: Output ONLY the raw markdown content. Do not use ```md wrappers.\n\n"
+            "generate the final agent output using the Eve framework structure.\n"
+            "CRITICAL: Output ONLY a valid JSON object where keys are file paths (e.g. 'agent.ts', 'instructions.md', 'skills/api.md', 'tools/fetch.ts') "
+            "and values are the string content of those files. Do not use ```json wrappers.\n\n"
             "FOLLOW THESE EXPERT INSTRUCTIONS FOR HOW A SKILL SHOULD BE WRITTEN:\n\n"
             f"{skill_creator_prompt}"
         )
     )
-    response = llm.invoke(
-        [sys_msg] + state["messages"] + [HumanMessage(content=f"Analysis:\n{state.get('analysis', '')}")]
-    )
+    response = llm.invoke([
+        sys_msg, 
+        HumanMessage(content=f"Task: {state['task_prompt']}\n\nAnalysis:\n{state.get('analysis', '')}\n\nContext:\n{state.get('pruned_context', '')}")
+    ])
+    
     folder_name = (state["target_url"].split("/")[-1] or "custom-skill").replace(".", "-").lower()
-    return {"messages": [response], "skill_content": response.content, "folder_name": folder_name}
-
+    return {"skill_content": response.content, "folder_name": folder_name}
 
 @retry(stop=stop_after_attempt(3), wait=wait_exponential(multiplier=1, min=2, max=10))
 def scaffold_mcp_server(state: AgentState):
@@ -310,14 +332,14 @@ def run_orchestrator(
     )
 
     initial_state = {
-        "messages":    [HumanMessage(content=f"Target URL: {url}\nTask: {prompt}")],
+        "task_prompt": prompt,
         "target_url":  url,
         "skill_content": "",
         "include_mcp": include_mcp,
         "folder_name": "",
         "mcp_script":  None,
         "mcp_config":  None,
-        "scraped_text": "",
+        "pruned_context": "",
         "analysis":    "",
         "db_id":       db_id,
     }

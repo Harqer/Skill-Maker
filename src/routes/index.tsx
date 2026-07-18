@@ -18,7 +18,7 @@ import { SignedIn, SignedOut, SignInButton, useUser } from '@clerk/clerk-react'
 export const Route = createFileRoute('/')({
   head: () => ({
     meta: [
-      { title: 'Skill Maker - Production AI Agent Skills' },
+      { title: 'Zap - Production AI Agent Skills' },
       { name: 'description', content: 'Discover, share, and deploy specialized skills for your autonomous AI agents.' }
     ]
   }),

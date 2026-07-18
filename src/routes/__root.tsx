@@ -32,7 +32,7 @@ export const Route = createRootRoute({
         content: 'width=device-width, initial-scale=1',
       },
       {
-        title: 'Skill Maker',
+        title: 'Zap',
       },
     ],
     links: [
@@ -77,7 +77,7 @@ function RootDocument({ children }: { children: React.ReactNode }) {
                   <div className="flex items-start gap-3">
                     <img src="/peacock_logo.jpg" alt="Logo" className="w-10 h-10 rounded-md shadow-sm object-cover" />
                     <div className="flex flex-col">
-                      <span className="font-bold text-lg leading-tight tracking-tight text-foreground">Skill Maker</span>
+                      <span className="font-bold text-lg leading-tight tracking-tight text-foreground">Zap</span>
                       <span className="text-sm italic text-muted-foreground font-serif">A workshop for AI skills</span>
                     </div>
                   </div>

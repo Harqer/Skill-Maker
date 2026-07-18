@@ -16,7 +16,7 @@ import { SignedIn, SignedOut, SignInButton } from '@clerk/clerk-react'
 export const Route = createFileRoute('/submit')({
   head: () => ({
     meta: [
-      { title: 'Submit a Skill - Skill Maker' },
+      { title: 'Submit a Skill - Zap' },
       { name: 'description', content: 'Share your agent skills with the community.' }
     ]
   }),

@@ -133,7 +133,7 @@ DATABRICKS_HOST: str  = _optional("DATABRICKS_HOST", "")
 DATABRICKS_TOKEN: str = _optional("DATABRICKS_TOKEN", "")
 
 
-# ── LangSmith tracing toggle ─────────────────────────────────────────────────
+# ── LangSmith tracing toggle (NVIDIA LangSmith / Deep Agent) ───────────────
 # Set both env var names: LANGSMITH_TRACING is the 2026 canonical name;
 # LANGCHAIN_TRACING_V2 is still read by older LangChain internals. Both must
 # be set to "true" to ensure every LangChain/LangGraph call is traced.
@@ -142,3 +142,8 @@ os.environ.setdefault("LANGCHAIN_TRACING_V2",   "true")
 os.environ.setdefault("LANGCHAIN_API_KEY",       LANGSMITH_API_KEY)
 os.environ.setdefault("LANGSMITH_API_KEY",       LANGSMITH_API_KEY)
 os.environ.setdefault("GOOGLE_API_KEY",          GEMINI_API_KEY)
+
+# Ensure NVIDIA LangSmith (Deep Agent) integration by pointing to the right project/endpoint if provided
+os.environ.setdefault("LANGCHAIN_PROJECT",       _optional("LANGCHAIN_PROJECT", "deep-agent"))
+if _optional("NVIDIA_LANGSMITH_ENDPOINT"):
+    os.environ.setdefault("LANGCHAIN_ENDPOINT",  _optional("NVIDIA_LANGSMITH_ENDPOINT"))
