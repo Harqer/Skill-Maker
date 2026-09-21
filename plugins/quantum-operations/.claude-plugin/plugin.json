@@ -1,0 +1,17 @@
+{
+  "name": "quantum-operations",
+  "version": "0.2.0",
+  "description": "Cross-hardware quantum circuit optimization workflows for reducing width, native two-qubit count, and depth while preserving exact semantics, with PyZX, pytket, and Fire Opal guidance.",
+  "author": {
+    "name": "Cristian Del Toro"
+  },
+  "keywords": [
+    "quantum",
+    "qiskit",
+    "qlasskit",
+    "reversible-computing",
+    "circuit-optimization",
+    "zx-calculus",
+    "tket"
+  ]
+}
