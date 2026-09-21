@@ -1,0 +1,6 @@
+{
+  "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
+  "name": "quantum-operations",
+  "version": "0.2.0",
+  "description": "Cross-hardware quantum circuit optimization workflows for reducing width, native two-qubit count, and depth while preserving exact semantics, with PyZX, pytket, and Fire Opal guidance."
+}
